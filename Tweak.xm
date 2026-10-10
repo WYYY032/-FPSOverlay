@@ -57,6 +57,36 @@
 
 static FPSOverlayView *gFPSView;
 
+static UIWindow *GetKeyWindow(void) {
+    UIWindow *keyWindow = nil;
+    if (@available(iOS 13.0, *)) {
+        for (UIScene *scene in UIApplication.sharedApplication.connectedScenes) {
+            if (scene.activationState != UISceneActivationStateForegroundActive) continue;
+            if (![scene isKindOfClass:[UIWindowScene class]]) continue;
+            UIWindowScene *windowScene = (UIWindowScene *)scene;
+            for (UIWindow *window in windowScene.windows) {
+                if (window.isKeyWindow) {
+                    keyWindow = window;
+                    break;
+                }
+            }
+            if (keyWindow) break;
+            if (windowScene.windows.count > 0) {
+                keyWindow = windowScene.windows.firstObject;
+                break;
+            }
+        }
+    }
+    if (!keyWindow) {
+        // 兼容旧系统兜底
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+        keyWindow = UIApplication.sharedApplication.keyWindow;
+#pragma clang diagnostic pop
+    }
+    return keyWindow;
+}
+
 %hook UIApplication
 - (void)applicationDidBecomeActive:(UIApplication *)application {
     %orig;
@@ -64,10 +94,7 @@ static FPSOverlayView *gFPSView;
         if (!gFPSView) {
             gFPSView = [[FPSOverlayView alloc] init];
         }
-        UIWindow *window = application.keyWindow;
-        if (!window && application.windows.count > 0) {
-            window = application.windows.firstObject;
-        }
+        UIWindow *window = GetKeyWindow();
         if (window && gFPSView.superview != window) {
             [gFPSView removeFromSuperview];
             [window addSubview:gFPSView];
@@ -79,7 +106,6 @@ static FPSOverlayView *gFPSView;
 
 %ctor {
     @autoreleasepool {
-        // This build targets SpringBoard only by default. Add app bundle IDs
-        // to FPSOverlay.plist to show the overlay in selected apps.
+        // 默认只注入 SpringBoard，如需其他 App 请修改 FPSOverlay.plist
     }
 }
