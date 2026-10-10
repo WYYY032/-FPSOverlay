@@ -1,0 +1,9 @@
+Package: com.example.fpsoverlay
+Name: FPS Overlay
+Version: 1.0.0
+Architecture: iphoneos-arm64
+Description: Lightweight real-time FPS floating overlay for injected apps.
+Maintainer: Local Build
+Author: Local Build
+Section: Tweaks
+Depends: firmware (>= 15.0)
